@@ -1,6 +1,6 @@
 /*
 京东极速版-金币
-5 4,10,14,18 * * * jd_speed_sign_2.js
+21 1,9,15,19 * * * jd_speed_sign.js
 */
 
 const $ = new Env('京东极速版');

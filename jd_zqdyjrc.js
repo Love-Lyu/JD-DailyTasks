@@ -2,7 +2,7 @@
 京东特价APP首页-赚钱大赢家
 助力码变量：多个用&号隔开
 DYJSHAREID = 'xxx&xxx&xxx'
-10 10 * * * jd_makemoneyshop_award.js
+10 10 * * * jd_zqdyj.js
  */
 
 const $ = new Env('特价版大赢家日常任务');
