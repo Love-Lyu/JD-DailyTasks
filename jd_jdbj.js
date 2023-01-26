@@ -1,126 +1,309 @@
 /*
-京东特价版-赚钱大赢家
-助力码变量：多个用&号隔开
-DYJSHAREID = 'xxx&xxx&xxx'
-10 10 * * * jd_zqdyj.js
+京东-京东保价(h5st)
+39 20,22 * * * jd_jdbj.js
  */
-
-const $ = new Env('特价版大赢家日常任务');
+const $ = new Env('京东保价');
 const notify = $.isNode() ? require('./sendNotify') : '';
+//Node.js用户请在jdCookie.js处填写京东ck;
 const jdCookieNode = $.isNode() ? require('./jdCookie.js') : '';
+const jsdom = $.isNode() ? require('jsdom') : '';
 //IOS等用户直接用NobyDa的jd cookie
-let cookiesArr = [], cookie = '';
-let shareId = [];
+let cookiesArr = [], cookie = '', message, allMessage = '';
 if ($.isNode()) {
-	Object.keys(jdCookieNode).forEach((item) => {
-		cookiesArr.push(jdCookieNode[item])
-	})
-	if (process.env.JD_DEBUG && process.env.JD_DEBUG === 'false') console.log = () => { };
+  Object.keys(jdCookieNode).forEach((item) => {
+    cookiesArr.push(jdCookieNode[item])
+  })
+  if (process.env.JD_DEBUG && process.env.JD_DEBUG === 'false') console.log = () => {};
 } else {
-	cookiesArr = [$.getdata('CookieJD'), $.getdata('CookieJD2'), ...jsonParse($.getdata('CookiesJD') || "[]").map(item => item.cookie)].filter(item => !!item);
+  cookiesArr = [$.getdata('CookieJD'), $.getdata('CookieJD2'), ...jsonParse($.getdata('CookiesJD') || "[]").map(item => item.cookie)].filter(item => !!item);
 }
-let helpinfo = {};
+const JD_API_HOST = 'https://api.m.jd.com/';
 !(async () => {
-	if (!cookiesArr[0]) {
-		$.msg($.name, '【提示】请先获取京东账号一cookie\n直接使用NobyDa的京东签到获取', 'https://bean.m.jd.com/bean/signIndex.action', { "open-url": "https://bean.m.jd.com/bean/signIndex.action" });
-		return;
-	}
-	console.log('开始领取任务奖励...')
+  if (!cookiesArr[0]) {
+    $.msg($.name, '【提示】请先获取京东账号一cookie\n直接使用NobyDa的京东签到获取', 'https://bean.m.jd.com/bean/signIndex.action', {"open-url": "https://bean.m.jd.com/bean/signIndex.action"});
+    return;
+  }
+  await jstoken();
+  for (let i = 0; i < cookiesArr.length; i++) {
+    if (cookiesArr[i]) {
+      cookie = cookiesArr[i];
+      $.UserName = decodeURIComponent(cookie.match(/pt_pin=([^; ]+)(?=;?)/) && cookie.match(/pt_pin=([^; ]+)(?=;?)/)[1])
+      $.index = i + 1;
+      $.isLogin = true;
+      $.nickName = '';
+      $.token = '';
+      message = '';
+      $.tryCount = 0;
+      //await TotalBean();
+      console.log(`\n******开始【京东账号${$.index}】${$.nickName || $.UserName}*********\n`);
+      if (!$.isLogin) {
+        $.msg($.name, `【提示】cookie已失效`, `京东账号${$.index} ${$.nickName || $.UserName}\n请重新登录获取\nhttps://bean.m.jd.com/bean/signIndex.action`, {"open-url": "https://bean.m.jd.com/bean/signIndex.action"});
 
-	for (let i = 0; i < cookiesArr.length; i++) {
-		if (cookiesArr[i]) {
-			cookie = cookiesArr[i];
-			$.UserName = decodeURIComponent(cookie.match(/pt_pin=([^; ]+)(?=;?)/) && cookie.match(/pt_pin=([^; ]+)(?=;?)/)[1])
-			$.index = i + 1;
-            $.canUseCoinAmount = 0;
-			$.ADID = getUUID("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", 1);
-			$.UUID = getUUID("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-			try {
-				UA = helpinfo[$.UserName].ua;
-			} catch (e) {
-				UA = `jdapp;iPhone;9.5.4;13.6;${$.UUID};network/wifi;ADID/${$.ADID};model/iPhone10,3;addressid/0;appBuild/167668;jdSupportDarkMode/0;Mozilla/5.0 (iPhone; CPU iPhone OS 13_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1`
-			}
-			console.log(`\n开始【账号${$.index}】${$.UserName}`);
-			//if (helpinfo[$.UserName].hot) continue;
-			await getinfo(1);	
-			await $.wait(200);			
-			await gettask();
-			await $.wait(500);
-			for (let item of $.tasklist) {
-				if (item.awardStatus !== 1) {
-					for (let k = 0; k < (item.realCompletedTimes - item.targetTimes + 1); k++) {
-						console.log(`去领取${item.taskName}奖励`);
-						await Award(item.taskId);
-						await $.wait(500);
-					}
-				}
-			}
-			await $.wait(1000);
-		}
-	}
-
-})()
-	.catch((e) => {
-		$.log('', `❌ ${$.name}, 失败! 原因: ${e}!`, '')
-	})
-	.finally(() => {
-		$.done();
-	})
-function getUUID(format = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", UpperCase = 0) {
-	return format.replace(/[xy]/g, function (c) {
-		var r = (Math.random() * 16) | 0,
-		v = c == "x" ? r : (r & 0x3) | 0x8;
-		if (UpperCase) {
-		uuid = v.toString(36).toUpperCase();
-		} else {
-		uuid = v.toString(36);
-		}
-		return uuid;
-	});
-}
-function getinfo(xc) {
-    let opt = {
-        url: `https://api.m.jd.com/api?g_ty=h5&g_tk=&appCode=msc588d6d5&body=%7B%22activeId%22%3A%2263526d8f5fe613a6adb48f03%22%2C%22isFirst%22%3A1%2C%22operType%22%3A1%7D&appid=jdlt_h5&client=jxh5&functionId=makemoneyshop_home&clientVersion=1.2.5&h5st=20221202224421183%3B5zi6yg6hy6dijtc6%3B638ee%3Btk02waef91cf118n77Hw3bHueBsVVy52Wbcx9h4HMPM7fpi9ntRoot7vaa118bRqqEnduYVLqW8kyzHpNsDp5PtrZ8tJ%3B8e13afd153316da1c4878705d9e1f17b27db283c%3B400%3B1669992261183%3Bf28308408a6bad45ead939c02e9cf1e489ad7a120db68c73bdee607bdb6db9daaf6fd9e2d4b87320f4ec869d11fb7fa97ea7bffc29059dfb373214547287d0a2f8d2de03200d84c4776d0464313a08e3488339db94ee9194cfb8237a7678d9020d0c6d9df83ea6c18193626f396ff6f9d41ff0a831b19868640ee15d264ac55bdd144f2a8323f8168cb761f298ab19b00bc20f917401a5f65df079011591dba83f9ee65e3fc211cbadb9211443680603&loginType=2&sceneval=2`,
-        headers: {
-            'Origin': 'https://wq.jd.com',
-            'Referer': 'https://wqs.jd.com/',
-            'User-Agent': UA,
-            'Cookie': cookie
+        if ($.isNode()) {
+          await notify.sendNotify(`${$.name}cookie已失效 - ${$.UserName}`, `京东账号${$.index} ${$.UserName}\n请重新登录获取cookie`);
         }
-    };
-    return new Promise(async (resolve) => {
-        $.get(opt, async (err, resp, data) => {
-            try {
-                if (err) {
-                    console.log(`${JSON.stringify(err)}`)
-                    console.log(` API请求失败，请检查网路重试`)
-                } else {
-                    // let tostr = data.match(/\((\{.*?\})\)/)[1];
-                    // data = eval('(' + tostr + ')');
-                    data = JSON.parse(data);
-                    if (data.code == 0) {
-                        if (xc) {
-                            let sId = data.data.shareId;
-                            //helpinfo[$.UserName].sId = `${sId}`;
-                            console.log('助力码：' + sId);
-                            console.log('当前营业金：' + data.data.canUseCoinAmount);
-                        }
-                    } else if (data.msg.indexOf('火爆') > -1) {
-                        console.log('此CK可能黑了！');
-                    } else {
-                        console.log(data.msg);
-                        //helpinfo[$.UserName].hot = 1;
-                    }
-                }
-            } catch (e) {
-                $.logErr(e, resp)
-            } finally {
-                resolve(data)
-            }
-        })
-    })
+        continue
+      }
+      await price()
+      if (i != cookiesArr.length - 1) {
+        await $.wait(2000)
+        await jstoken();
+      }
+    }
+  }
+  if (allMessage) {
+    if ($.isNode()) await notify.sendNotify(`${$.name}`, `${allMessage}`);
+  }
+})()
+  .catch((e) => {
+    $.log('', `❌ ${$.name}, 失败! 原因: ${e}!`, '')
+  })
+  .finally(() => {
+    $.done();
+  })
+
+async function price() {
+  let num = 0
+  do {
+    $.token = $.jab.getToken() || ''
+    if ($.token) {
+      await siteppM_skuOnceApply();
+    }
+    num++
+  } while (num < 3 && !$.token)
+  await showMsg()
 }
 
+async function siteppM_skuOnceApply() {
+  let body = {
+    sid: "",
+    type: "25",
+    forcebot: "",
+    token: $.token,
+    feSt: $.token ? "s" : "f"
+  }
+  const time = Date.now();
+  const h5st = await $.signWaap("d2f64", {
+    appid: "siteppM",
+    functionId: "siteppM_skuOnceApply",
+    t: time,
+    body: body
+});
+  return new Promise(async resolve => {
+    $.post(taskUrl("siteppM_skuOnceApply", body, h5st, time), async (err, resp, data) => {
+      try {
+        if (err) {
+          console.log(JSON.stringify(err))
+          console.log(`${$.name} siteppM_skuOnceApply API请求失败，请检查网路重试`);
+        } else {
+          if (safeGet(data)) {
+            data = JSON.parse(data)
+            if (data.flag) {
+              await $.wait(25 * 1000);
+              await siteppM_appliedSuccAmount();
+            } else {
+              console.log(`保价失败：${data.responseMessage}`);
+              // 重试3次
+              if ($.tryCount < 4) {
+                await $.wait(2 * 1000);
+                siteppM_skuOnceApply();
+                $.tryCount++;
+              } else {
+                //message += `保价失败：${data.responseMessage}\n`;
+              }
+
+            }
+          }
+        }
+      } catch (e) {
+        $.logErr(e, resp);
+      } finally {
+        resolve(data);
+      }
+    })
+  })
+}
+function siteppM_appliedSuccAmount() {
+  let body = {
+    sid: "",
+    type: "25",
+    forcebot: "",
+    num: 15
+  }
+  return new Promise(resolve => {
+    $.post(taskUrl("siteppM_appliedSuccAmount", body), (err, resp, data) => {
+      try {
+        if (err) {
+          console.log(JSON.stringify(err))
+          console.log(`${$.name} siteppM_appliedSuccAmount API请求失败，请检查网路重试`)
+        } else {
+          if (safeGet(data)) {
+            data = JSON.parse(data)
+            if (data.flag) {
+              console.log(`保价成功：返还${data.succAmount}元`)
+              message += `保价成功：返还${data.succAmount}元\n`
+            } else {
+              console.log(`保价失败：没有可保价的订单`)
+            }
+          }
+        }
+      } catch (e) {
+        $.logErr(e, resp)
+      } finally {
+        resolve(data)
+      }
+    })
+  })
+}
+
+async function jstoken() {
+  if ($.jab && $.signWaap) {
+    return;
+  }
+
+  const { JSDOM } = jsdom;
+  let resourceLoader = new jsdom.ResourceLoader({
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0) Gecko/20100101 Firefox/91.0',
+    referrer: "https://msitepp-fm.jd.com/rest/priceprophone/priceProPhoneMenu"
+  });
+  let virtualConsole = new jsdom.VirtualConsole();
+  let options = {
+    url: "https://msitepp-fm.jd.com/rest/priceprophone/priceProPhoneMenu",
+    referrer: "https://msitepp-fm.jd.com/rest/priceprophone/priceProPhoneMenu",
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0) Gecko/20100101 Firefox/91.0',
+    runScripts: "dangerously",
+    resources: resourceLoader,
+    includeNodeLocations: true,
+    storageQuota: 10000000,
+    pretendToBeVisual: true,
+    virtualConsole
+  };
+  const dom = new JSDOM(`<body>
+  <script src="https:////static.360buyimg.com/siteppStatic/script/mescroll/map.js"></script>
+  <script src="https://storage.360buyimg.com/webcontainer/js_security_v3_0.1.0.js"></script>
+  <script src="https://static.360buyimg.com/siteppStatic/script/utils.js"></script>
+  <script src="https://js-nocaptcha.jd.com/statics/js/main.min.js"></script>
+  </body>`, options);
+  await $.wait(1000)
+  try {
+    $.jab = new dom.window.JAB({
+      bizId: 'jdjiabao',
+      initCaptcha: false
+    });
+    $.signWaap = dom.window.signWaap;
+  } catch (e) {}
+}
+
+function downloadUrl(url) {
+  return new Promise(resolve => {
+    const options = { url, "timeout": 10000 };
+    $.get(options, async (err, resp, data) => {
+      let res = null
+      try {
+        if (err) {
+          console.log(`⚠️网络请求失败`);
+        } else {
+          res = data;
+        }
+      } catch (e) {
+        $.logErr(e, resp)
+      } finally {
+        resolve(res);
+      }
+    })
+  })
+}
+
+function showMsg() {
+  return new Promise(resolve => {
+    if (message) {
+      allMessage += `【京东账号${$.index}】${$.nickName || $.UserName}\n${message}${$.index !== cookiesArr.length ? '\n\n' : '\n\n'}`;
+    }
+    $.msg($.name, '', `【京东账号${$.index}】${$.nickName || $.UserName}\n${message}`);
+    resolve()
+  })
+}
+
+function taskUrl(functionId, body, h5st = '', time = Date.now()) {
+  return {
+    url: `${JD_API_HOST}api?appid=siteppM&functionId=${functionId}&forcebot=&t=${time}`,
+    body: `body=${encodeURIComponent(JSON.stringify(body))}&h5st=${encodeURIComponent(h5st)}`,
+    headers: {
+      "Host": "api.m.jd.com",
+      "Accept": "application/json",
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Origin": "https://msitepp-fm.jd.com",
+      "Accept-Language": "zh-CN,zh-Hans;q=0.9",
+      "User-Agent": $.isNode() ? (process.env.JD_USER_AGENT ? process.env.JD_USER_AGENT : (require('./USER_AGENTS').USER_AGENT)) : ($.getdata('JDUA') ? $.getdata('JDUA') : "jdapp;iPhone;9.4.4;14.3;network/4g;Mozilla/5.0 (iPhone; CPU iPhone OS 14_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1"),
+      "Referer": "https://msitepp-fm.jd.com/",
+      "Accept-Encoding": "gzip, deflate, br",
+      "Cookie": cookie
+    }
+  }
+}
+
+function TotalBean() {
+  return new Promise(resolve => {
+    const options = {
+      url: "https://me-api.jd.com/user_new/info/GetJDUserInfoUnion",
+      headers: {
+        "Host": "me-api.jd.com",
+        "Accept": "*/*",
+        "User-Agent": "ScriptableWidgetExtension/185 CFNetwork/1312 Darwin/21.0.0",
+        "Accept-Language": "zh-CN,zh-Hans;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Cookie": cookie
+      }
+    }
+    $.get(options, (err, resp, data) => {
+      try {
+        if (err) {
+          $.logErr(err)
+        } else {
+          if (data) {
+            data = JSON.parse(data);
+            if (data['retcode'] === "1001") {
+              $.isLogin = false; //cookie过期
+              return;
+            }
+            if (data['retcode'] === "0" && data.data && data.data.hasOwnProperty("userInfo")) {
+              $.nickName = data.data.userInfo.baseInfo.nickname;
+            }
+          } else {
+            console.log('京东服务器返回空数据');
+          }
+        }
+      } catch (e) {
+        $.logErr(e, resp)
+      } finally {
+        resolve()
+      }
+    })
+  })
+}
+function safeGet(data) {
+  try {
+    if (typeof JSON.parse(data) == "object") {
+      return true;
+    }
+  } catch (e) {
+    console.log(e);
+    console.log(`京东服务器访问数据为空，请检查自身设备网络情况`);
+    return false;
+  }
+}
+function jsonParse(str) {
+  if (typeof str == "string") {
+    try {
+      return JSON.parse(str);
+    } catch (e) {
+      console.log(e);
+      $.msg($.name, '', '请勿随意在BoxJs输入框修改内容\n建议通过脚本去获取cookie')
+      return [];
+    }
+  }
+}
+// prettier-ignore
 function Env(t, e) {
     "undefined" != typeof process && JSON.stringify(process.env).indexOf("GITHUB") > -1 && process.exit(0);
     class s {
