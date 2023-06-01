@@ -1,3 +1,10 @@
+"""
+京东集合签到 v1.0
+
+cron: 26 9,14 * * *
+const $ = new Env("京东集合签到");
+"""
+
 import time, requests, sys, json, re
 from jdCookie import get_cookies
 from datetime import datetime
@@ -155,7 +162,7 @@ if __name__ == '__main__':
     num = 0
     for cookie in getCk:
         num += 1
-        if num % 10 == 0:
+        if num % 5 == 0:
             print("⏰等待5s,休息一下")
             time.sleep(5)
         try:
