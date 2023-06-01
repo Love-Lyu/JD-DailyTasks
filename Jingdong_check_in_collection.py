@@ -174,7 +174,7 @@ if __name__ == '__main__':
 
         try:
             print(JD_collection_check_in(cookie))
-            print(JD_Finance_Sign_in(cookie))
+            #print(JD_Finance_Sign_in(cookie))
             print(JD_Financial_Double_Sign(cookie))
         except Exception as e:
             print(e)
