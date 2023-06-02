@@ -76,12 +76,15 @@ def JD_collection_check_in(cookie):
         # 实例化json
         data = response.json() 
         # 获取需要的数据
+        # 京豆数量
         bean_count = data['data']['continuityAward']['beanAward']['beanCount']
+        # 返回签到信息
+        titile = data['data']['continuityAward']['title']
         # 构建返回
-        result = f"京东签到成功 | {bean_count} 京豆"
+        result = f"京东 | {titile} | {bean_count} 京豆"
     except (KeyError, ValueError, TypeError):
         # 构建返回
-        result = "京东签到失败 | 黑号"
+        result = "京东 | 签到失败 | 黑号"
     return result
 
 # 京东金融双签-签到
@@ -115,10 +118,10 @@ def JD_Finance_Sign_in(cookie):
         awards = data["resultData"]["resBusiData"]["taskDetailInfoList"][0]["awards"]
         award_real_num = awards[0]["awardRealNum"]
         # 构建返回
-        result = f"金融签到成功 | {award_real_num } 金贴"
+        result = f"京东金融 | 签到成功 | {award_real_num } 金贴"
     except (KeyError, ValueError, TypeError):
         # 构建返回
-        result = "金融签到失败 | 黑号"
+        result = "京东金融 | 签到失败 | 黑号"
     return result
 
 # 京东金融双签-领取
@@ -160,15 +163,15 @@ def JD_Financial_Double_Sign(cookie):
         if "京豆" in data:
             count = re.search(r"\"count\":\"?(\d.*?)\"?,", data).group(1)
             # 构建返回
-            result = f"金融签到领取成功 | {count}京豆"
+            result = f"京东金融 | 签到领取成功 | {count}京豆"
         else:
             business_data = data['resultData']['data']['businessData']
             business_msg = business_data['businessMsg']
             # 构建返回
-            result = f"金融签到领取异常 | {business_msg}"
+            result = f"京东金融 | 签到领取异常 | {business_msg}"
     except (KeyError, ValueError, TypeError):
         # 构建返回
-        result = "金融签到领取失败 | 黑号"
+        result = "京东金融 | 签到领取失败 | 黑号"
     return result
 
 # 执行程序
