@@ -4,9 +4,9 @@
 cron: 26 9,14 * * *
 const $ = new Env("京东集合签到");
 """
-
-import time, requests, sys, json, re
 from jdCookie import get_cookies
+from function import Jingdong_auxiliary_module
+import time, requests, sys, json, re
 from datetime import datetime
 import urllib.parse
 
@@ -16,7 +16,7 @@ def JD_collection_check_in(cookie):
     url = 'https://api.m.jd.com/client.action'
     # 请求标头
     headers = {
-        'user-agent': 'jdapp;android;11.6.4;;;appBuild/98704;ef/1;ep/%7B%22hdid%22%3A%22JM9F1ywUPwflvMIpYPok0tt5k9kW4ArJEU3lfLhxBqw%3D%22%2C%22ts%22%3A1685499076768%2C%22ridx%22%3A-1%2C%22cipher%22%3A%7B%22sv%22%3A%22CJC%3D%22%2C%22ad%22%3A%22CNU5YzZvDzK1EWDuYwOmCm%3D%3D%22%2C%22od%22%3A%22YwG2Ytq3YzdrCzCyZNS2EK%3D%3D%22%2C%22ov%22%3A%22CzC%3D%22%2C%22ud%22%3A%22CNU5YzZvDzK1EWDuYwOmCm%3D%3D%22%7D%2C%22ciphertype%22%3A5%2C%22version%22%3A%221.2.0%22%2C%22appname%22%3A%22com.jingdong.app.mall%22%7D;jdSupportDarkMode/0;Mozilla/5.0 (Linux; Android 13; M2007J1SC Build/TKQ1.221114.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/89.0.4389.72 MQQBrowser/6.2 TBS/046248 Mobile Safari/537.36',
+        'user-agent': randomUserAgent(),
         'accept': '*/*',
         'x-requested-with': 'com.jingdong.app.mall',
         'sec-fetch-site': 'same-site',
@@ -42,19 +42,15 @@ def JD_collection_check_in(cookie):
         'eu': '0353933663567303',
         'fv': '5393364626160333',
         'openudid': '0353933663567303-5393364626160333',
-        'd_model': 'Mi 10 Ultra',
-        'jsonp': 'jsonp_1685499111584_48445'
         }
     # 发送请求
     response = requests.get(url, params=params, headers=headers)
     # 异常处理
     try:
-        # 将返回内容分隔为json格式
-        json_data = re.search(r'\((.*)\)', response.text).group(1)
         # 实例化json
-        data = json.loads(json_data)
+        data = response.json() 
         # 获取需要的数据
-        bean_count = data['data']['dailyAward']['beanAward']['beanCount']
+        bean_count = data['data']['continuityAward']['beanAward']['beanCount']
         # 构建返回
         result = f"京东签到成功 | {bean_count} 京豆"
     except (KeyError, ValueError, TypeError):
@@ -72,7 +68,7 @@ def JD_Finance_Sign_in(cookie):
     url = "https://ms.jr.jd.com/gw2/generic/jrSign/h5/m/queryWeekSignSub"
     # 请求标头
     headers = {
-    "User-Agent": "Mozilla/5.0 (Linux; Android 13; M2007J1SC Build/TKQ1.221114.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/89.0.4389.72 MQQBrowser/6.2 TBS/046247 Mobile Safari/537.36/application=JDJR-App&clientType=android&src=xiaomi&version=6.5.50&clientVersion=6.5.50&osVersion=13&osName=M2007J1SC&isUpdate=0&HiClVersion=&netWork=1&netWorkType=1&CpayJS=UnionPay/1.0 JDJR&sPoint=MTAwMDYjIw%3D%3D%0A&*#@jdPaySDK*#@jdPayChannel=jdFinance&jdPayChannelVersion=6.5.50&jdPaySdkVersion=1.1.3&androidBrand=Xiaomi&androidManufacturer=Xiaomi&jdPayClientName=Android*#@jdPaySDK*#@",
+    "User-Agent": randomUserAgent(),
     "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
     "Origin": "https://member.jr.jd.com",
     "X-Requested-With": "com.jd.jrapp",
@@ -106,7 +102,7 @@ def JD_Financial_Double_Sign(cookie):
     # 请求标头
     headers = {
     'accept': 'application/json',
-    'user-agent': 'jdapp;android;11.6.4;;;appBuild/98704;ef/1;ep/%7B%22hdid%22%3A%22JM9F1ywUPwflvMIpYPok0tt5k9kW4ArJEU3lfLhxBqw%3D%22%2C%22ts%22%3A1685500271701%2C%22ridx%22%3A-1%2C%22cipher%22%3A%7B%22sv%22%3A%22CJC%3D%22%2C%22ad%22%3A%22CNU5YzZvDzK1EWDuYwOmCm%3D%3D%22%2C%22od%22%3A%22YwG2Ytq3YzdrCzCyZNS2EK%3D%3D%22%2C%22ov%22%3A%22CzC%3D%22%2C%22ud%22%3A%22CNU5YzZvDzK1EWDuYwOmCm%3D%3D%22%7D%2C%22ciphertype%22%3A5%2C%22version%22%3A%221.2.0%22%2C%22appname%22%3A%22com.jingdong.app.mall%22%7D;jdSupportDarkMode/0;Mozilla/5.0 (Linux; Android 13; M2007J1SC Build/TKQ1.221114.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/89.0.4389.72 MQQBrowser/6.2 TBS/046248 Mobile Safari/537.36',
+    'user-agent': randomUserAgent(),
     'content-type': 'application/x-www-form-urlencoded;charset=UTF-8',
     'origin': 'https://m.jr.jd.com',
     'x-requested-with': 'com.jingdong.app.mall',
