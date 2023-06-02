@@ -160,10 +160,10 @@ def JD_Financial_Double_Sign(cookie):
         # 实例化json
         data = response.json()  
         # 获取需要的数据
-        if "京豆" in data:
-            count = re.search(r"\"count\":\"?(\d.*?)\"?,", data).group(1)
+        if 'awardListVo' in data['resultData']['data']['businessData']['businessData']:
+            count = data['resultData']['data']['businessData']['businessData']['awardListVo'][0]['count']
             # 构建返回
-            result = f"京东金融 | 签到领取成功 | {count}京豆"
+            result = f"京东金融 | 签到领取成功 | {count} 京豆"
         else:
             business_data = data['resultData']['data']['businessData']
             business_msg = business_data['businessMsg']
