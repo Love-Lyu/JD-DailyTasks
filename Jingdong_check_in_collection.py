@@ -100,7 +100,7 @@ def JD_collection_check_in(cookie):
         if 'continuityAward' in data['data'] and 'title' in data['data']['continuityAward']:
             title = data['data']['continuityAward']['title']
         elif 'dailyAward' in data['data'] and 'title' in data['data']['dailyAward']:
-            title = data['data']['dailyAward']['title']
+            title = data['data']['dailyAward']['title'] + data['data']['dailyAward']['subTitle']
         # 构建返回
         result = f"京东 | {title} | {bean_count} 京豆"
     except (KeyError, ValueError, TypeError):
