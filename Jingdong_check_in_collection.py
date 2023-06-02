@@ -1,11 +1,5 @@
-"""
-京东集合签到 v1.0
-
-cron: 26 9,14 * * *
-const $ = new Env("京东集合签到");
-"""
-from jdCookie import get_cookies
 import time, requests, sys, json, re
+from jdCookie import get_cookies
 from datetime import datetime
 import urllib.parse
 import random
@@ -36,6 +30,37 @@ def randomUserAgent():
     user_agent = f'jdapp;iPhone;10.0.4;{ios_ver};{uuid};network/wifi;ADID/{adid};model/iPhone{iphone},1;addressid/{addressid};appBuild/167707;jdSupportDarkMode/0;Mozilla/5.0 (iPhone; CPU iPhone OS {ios_v} like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/null;supportJDSHWK/1'
     return user_agent
 
+# 请求sign服务
+def get_sign_kemeng(fn, body):
+    str_sign = ''
+    data = {
+        "fn": fn,
+        "body": body
+    }
+    url = 'http://47.120.9.145:3000/M-sign'
+    headers = {
+        'Accept': '*/*',
+        'Content-Type': 'application/json'
+    }
+    response = requests.post(url,headers=headers,json=data)
+    try:
+        if response.status_code == 200:
+            data = response.json()
+            if data and data.get('body'):
+                if data['body']:
+                    str_sign = data['body']
+                    if str_sign != '':
+                        return str_sign
+                    else:
+                        print("签名获取失败.")
+            else:
+                print("签名获取失败.")
+        else:
+            print("签名获取失败.")
+    except Exception as e:
+        print(f"解析数据出错: {e}")
+    return str_sign
+
 # 京东签到领京豆
 def JD_collection_check_in(cookie):
     # 请求url
@@ -56,18 +81,8 @@ def JD_collection_check_in(cookie):
     # 传入参数
     params = {
         'functionId': 'signBeanAct',
-        'body': '{"fp":"-1","shshshfp":"-1","shshshfpa":"-1","referUrl":"-1","userAgent":"-1","jda":"-1","rnVersion":"3.9"}',
-        'appid': 'ld',
-        'client': 'android',
-        'clientVersion': '11.6.4',
-        'networkType': 'wifi',
-        'osVersion': '13',
-        'loginType': '2',
-        'screen': '393*770',
-        'uuid': '0353933663567303-5393364626160333',
-        'eu': '0353933663567303',
-        'fv': '5393364626160333',
-        'openudid': '0353933663567303-5393364626160333',
+        'body': get_sign_kemeng('signBeanAct', {"fp":"-1","shshshfp":"-1","shshshfpa":"-1","referUrl":"-1","userAgent":"-1","jda":"-1","rnVersion":"3.9"}),
+        'appid': 'ld'
         }
     # 发送请求
     response = requests.get(url, params=params, headers=headers)
@@ -77,11 +92,17 @@ def JD_collection_check_in(cookie):
         data = response.json() 
         # 获取需要的数据
         # 京豆数量
-        bean_count = data['data']['continuityAward']['beanAward']['beanCount']
+        if 'continuityAward' in data['data'] and 'beanAward' in data['data']['continuityAward']:
+            bean_count = data['data']['continuityAward']['beanAward']['beanCount']
+        elif 'dailyAward' in data['data'] and 'beanAward' in data['data']['dailyAward']:
+            bean_count = data['data']['dailyAward']['beanAward']['beanCount']
         # 返回签到信息
-        titile = data['data']['continuityAward']['title']
+        if 'continuityAward' in data['data'] and 'title' in data['data']['continuityAward']:
+            title = data['data']['continuityAward']['title']
+        elif 'dailyAward' in data['data'] and 'title' in data['data']['dailyAward']:
+            title = data['data']['dailyAward']['title']
         # 构建返回
-        result = f"京东 | {titile} | {bean_count} 京豆"
+        result = f"京东 | {title} | {bean_count} 京豆"
     except (KeyError, ValueError, TypeError):
         # 构建返回
         result = "京东 | 签到失败 | 黑号"
