@@ -1,3 +1,10 @@
+"""
+京东集合签到 v1.0
+
+cron: 26 9,14 * * *
+const $ = new Env("京东集合签到");
+"""
+
 import time, requests, sys, json, re
 from jdCookie import get_cookies
 from datetime import datetime
@@ -202,14 +209,14 @@ if __name__ == '__main__':
         if not getCk:
             sys.exit()
     except:
-        print("未获取到有效COOKIE,退出程序！")
+        print("未获取到有效COOKIE | 退出程序！")
         sys.exit()
     print('🔔京东集合签到')
     num = 0
     for cookie in getCk:
         num += 1
         if num % 5 == 0:
-            print("⏰等待5s,休息一下")
+            print("⏰等待5s | 休息一下")
             time.sleep(5)
         try:
             pt_pin = re.compile(r'pt_pin=(.*?);').findall(cookie)[0]
