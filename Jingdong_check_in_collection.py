@@ -44,7 +44,7 @@ def get_sign_kemeng(fn, body):
         "fn": fn,
         "body": body
     }
-    url = 'http://47.120.9.145:3000/M-sign'
+    url = 'https://sign.kemeng.online/M-sign'
     headers = {
         'Accept': '*/*',
         'Content-Type': 'application/json'
